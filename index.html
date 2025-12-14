@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>SketchVanish</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #ffffff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  /* ヘッダー（タイトル＋説明＋リセット） */
+  #header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #ddd;
+    background: #fafafa;
+  }
+
+  #brand {
+    font-size: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  #desc {
+    font-size: 12px;
+    line-height: 1.3;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: #ffe6ee; /* 薄ピンク */
+    flex: 1;
+  }
+
+  #resetBtn {
+    font-size: 12px;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  #resetBtn:active {
+    transform: translateY(1px);
+  }
+
+  #canvas {
+    flex: 1;
+    touch-action: none; /* スクロール防止（モバイル向け） */
+    background: #ffffff;
+    display: block;
+  }
+
+  /* スマホ：タイトル→説明→ボタンを縦並び */
+  @media (max-width: 600px) {
+    #header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    #brand {
+      align-self: flex-start;
+    }
+    #resetBtn {
+      align-self: flex-end;
+    }
+  }
+</style>
+</head>
+
+<body>
+<div id="wrap">
+  <div id="header">
+    <div id="brand">SketchVanish</div>
+    <div id="desc">
+      指（またはタッチペン）で、この画面に絵を描けます。●絵は端末のブラウザ内にのみ保存され、サーバーに送信されません。●描いた絵は、24時間後に自動的に消えます。●共有したい場合はURLでなく、スクショで。
+    </div>
+    <button id="resetBtn" type="button">リセット</button>
+  </div>
+
+  <canvas id="canvas"></canvas>
+</div>
+
+<script>
+(function () {
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const STORAGE_KEY = "sketchVanishData";
+  const TIME_KEY = "sketchVanishLastDraw";
+  const VANISH_LIMIT = 24 * 60 * 60 * 1000; // 24時間
+
+  let drawing = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    // ★注意：ここでwidth/heightを変えるとキャンバス内容はクリアされます。
+    // 今回は「再描画はlocalStorageから復元」でカバーします。
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    restoreCanvas();
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#000";
+
+  // ---- 保存・復元 ----
+  function saveCanvas() {
+    try {
+      localStorage.setItem(STORAGE_KEY, canvas.toDataURL("image/png"));
+      localStorage.setItem(TIME_KEY, Date.now().toString());
+    } catch (e) {
+      // 容量制限などで保存できない場合は無視
+    }
+  }
+
+  function restoreCanvas() {
+    const savedAt = localStorage.getItem(TIME_KEY);
+    const data = localStorage.getItem(STORAGE_KEY);
+
+    if (!savedAt || !data) return;
+
+    if (Date.now() - Number(savedAt) > VANISH_LIMIT) {
+      clearCanvas();
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = data;
+  }
+
+  function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(TIME_KEY);
+  }
+
+  // ---- 描画処理 ----
+  function startDraw(x, y) {
+    drawing = true;
+    lastX = x;
+    lastY = y;
+  }
+
+  function drawTo(x, y) {
+    if (!drawing) return;
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    lastX = x;
+    lastY = y;
+    saveCanvas(); // 最後に描いた時刻もここで更新（A案）
+  }
+
+  function endDraw() {
+    drawing = false;
+  }
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (e.touches) {
+      const t = e.touches[0] || e.changedTouches[0];
+      return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+    }
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  // ---- イベント（マウス）----
+  canvas.addEventListener("mousedown", (e) => {
+    const p = getPos(e);
+    startDraw(p.x, p.y);
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (!drawing) return;
+    const p = getPos(e);
+    drawTo(p.x, p.y);
+  });
+
+  window.addEventListener("mouseup", endDraw);
+
+  // ---- イベント（タッチ）----
+  canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    const p = getPos(e);
+    startDraw(p.x, p.y);
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    if (!drawing) return;
+    const p = getPos(e);
+    drawTo(p.x, p.y);
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", endDraw);
+
+  // ---- リセットボタン ----
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (confirm("キャンバスを消して描き直しますか？")) {
+      clearCanvas();
+    }
+  });
+
+  // ---- 期限チェック（ページを開いた瞬間に1回）----
+  // 24時間超えてたら自動クリア
+  (function expireCheckOnce() {
+    const savedAt = localStorage.getItem(TIME_KEY);
+    if (!savedAt) return;
+    if (Date.now() - Number(savedAt) > VANISH_LIMIT) {
+      clearCanvas();
+    }
+  })();
+
+})();
+</script>
+</body>
+</html>
