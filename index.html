@@ -66,14 +66,17 @@
   }
 
   #adwrap{
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-top: 1px solid #ddd;
-    background: #fff;
-    flex: 0 0 50px;
-  }
+  height: 50px;
+  min-height: 50px;
+  max-height: 50px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid #ddd;
+  background: #fff;
+  flex: 0 0 50px;
+}
 
   /* スマホ：タイトル→説明→ボタンを縦並び */
   @media (max-width: 600px) {
@@ -90,13 +93,9 @@
     }
   }
 </style>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5620222082871419"
-     crossorigin="anonymous"></script>
-
-  // ---- AdSense 初期化（広告枠を読み込む）----
-  try {
-    (adsbygoogle = window.adsbygoogle || []).push({});
-  } catch (e) {}
+<script async
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5620222082871419"
+  crossorigin="anonymous"></script>
 </script>
 </head>
 
@@ -112,11 +111,17 @@
 
   <canvas id="canvas"></canvas>
   <div id="adwrap">
-    <ins class="adsbygoogle"
-     style="display:inline-block;width:320px;height:50px"
-     data-ad-client="ca-pub-5620222082871419"
-     data-ad-slot="8191515394"></ins>
-  </div>
+  <ins class="adsbygoogle"
+    style="display:inline-block;width:320px;height:50px"
+    data-ad-client="ca-pub-5620222082871419"
+    data-ad-slot="8191515394"></ins>
+
+  <script>
+    try {
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {}
+  </script>
+</div>
 </div>
 
 <script>
