@@ -65,6 +65,16 @@
     display: block;
   }
 
+  #adwrap{
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid #ddd;
+    background: #fff;
+    flex: 0 0 50px;
+  }
+
   /* スマホ：タイトル→説明→ボタンを縦並び */
   @media (max-width: 600px) {
     #header {
@@ -80,6 +90,14 @@
     }
   }
 </style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5620222082871419"
+     crossorigin="anonymous"></script>
+
+  // ---- AdSense 初期化（広告枠を読み込む）----
+  try {
+    (adsbygoogle = window.adsbygoogle || []).push({});
+  } catch (e) {}
+</script>
 </head>
 
 <body>
@@ -87,12 +105,18 @@
   <div id="header">
     <div id="brand">SketchVanish</div>
     <div id="desc">
-      指（またはタッチペン）で、この画面に絵を描けます。●絵は端末のブラウザ内にのみ保存され、サーバーに送信されません。●描いた絵は、24時間後に自動的に消えます。●共有したい場合はURLでなく、スクショで。
+      指、またはタッチペン（PCの場合はマウス等）で、この画面に絵を描けます。●絵は端末のブラウザ内にのみ保存され、サーバーに送信されません。●描いた絵は、24時間後に自動的に消えます。●共有したい場合はURLでなく、スクショで。
     </div>
     <button id="resetBtn" type="button">リセット</button>
   </div>
 
   <canvas id="canvas"></canvas>
+  <div id="adwrap">
+    <ins class="adsbygoogle"
+     style="display:inline-block;width:320px;height:50px"
+     data-ad-client="ca-pub-5620222082871419"
+     data-ad-slot="8191515394"></ins>
+  </div>
 </div>
 
 <script>
